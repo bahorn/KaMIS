@@ -55,6 +55,10 @@ int main(int argn, char **argv) {
         ss >> nmbEdges;
         ss >> ew;
 
+        // Read flags from `ew` to determine if we need to consider weights.
+        long start_pos = 1*((ew & 10) == 10);
+        long pos_inc = 1+1*((ew &  1) == 1);
+
         std::vector<long> node_starts;
         node_starts.reserve(nmbNodes + 1);
         node_starts.push_back(0);
@@ -81,7 +85,13 @@ int main(int argn, char **argv) {
 
             std::stringstream ss(line);
             long target;
+            long i = -1;
             while (ss >> target) {
+                i += 1;
+                // Skipping positions that don't contain a connection
+                if ((i < start_pos) || (((i - start_pos) % pos_inc) != 0)) {
+                    continue;
+                }
                 node_degree++;
                 // Check if the neighboring node is within the valid range
                 if (target > nmbNodes || target <= 0) {
@@ -121,7 +131,7 @@ int main(int argn, char **argv) {
 
 
         // Check if there are parallel edges
-        for (long node = 0; node < nmbNodes; node++) {
+        for (long node = start_pos; node < nmbNodes; node += pos_inc) {
             std::unordered_set<long> seen_adjacent_nodes;
             for (long e = node_starts[node]; e < node_starts[node + 1]; e++) {
                 long target = adjacent_nodes[e];
@@ -153,7 +163,7 @@ int main(int argn, char **argv) {
         }
 
         // Check if all backward and forward edges exist 
-        for (long node = 0; node < nmbNodes; node++) {
+        for (long node = start_pos; node < nmbNodes; node += pos_inc) {
             for(long e = node_starts[node]; e < node_starts[node + 1]; e++) {
                 long target = adjacent_nodes[e];
                 bool found = false;
